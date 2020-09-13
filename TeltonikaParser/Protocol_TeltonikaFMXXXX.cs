@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
-using System.Data;
-using System.Net.Sockets;
-using System.Linq;
-using System.IO;
 
 namespace TeltonikaParser
 {
@@ -14,27 +9,6 @@ namespace TeltonikaParser
     /// </summary>
     public class Protocol_TeltonikaFMXXXX
     {
-
-        private const int CODEC_FMXXX = 0x08;
-
-        private const int ACC = 1;
-        private const int DOOR = 2;
-        private const int Analog = 4;
-        private const int GSM = 5;
-        private const int SPEED = 6;
-        private const int VOLTAGE = 7;
-        private const int GPSPOWER = 8;
-        private const int TEMPERATURE = 9;
-        private const int ODOMETER = 16;
-        private const int STOP = 20;
-        private const int TRIP = 28;
-        private const int IMMOBILIZER = 29;
-        private const int AUTHORIZED = 30;
-        private const int GREEDRIVING = 31;
-        private const int OVERSPEED = 33;
-
-
-
         private static string Parsebytes(Byte[] byteBuffer, int index, int Size)
         {
             return BitConverter.ToString(byteBuffer, index, Size).Replace("-", string.Empty);
@@ -65,7 +39,7 @@ namespace TeltonikaParser
             index++;
             uint codecID = byteBuffer[index];
 
-            if (codecID == CODEC_FMXXX)
+            if (codecID == Constants.CODEC_8)
             {
                 index++;
                 uint NumberOfData = byteBuffer[index];
@@ -79,24 +53,24 @@ namespace TeltonikaParser
                 {
                     Position position = new Position();
 
-                    var timestamp = Int64.Parse(Parsebytes(byteBuffer, index, 8), System.Globalization.NumberStyles.HexNumber);
+                    var timestamp = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
                     index += 8;
 
                     position.Time = DateTime.Now;
 
-                    var Preority = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                    var Preority = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                     index++;
 
-                    position.Lo = Int32.Parse(Parsebytes(byteBuffer, index, 4), System.Globalization.NumberStyles.HexNumber) / 10000000.0;
+                    position.Lo = Int32.Parse(Parsebytes(byteBuffer, index, 4), NumberStyles.HexNumber) / 10000000.0;
                     index += 4;
 
-                    position.La = Int32.Parse(Parsebytes(byteBuffer, index, 4), System.Globalization.NumberStyles.HexNumber) / 10000000.0;
+                    position.La = Int32.Parse(Parsebytes(byteBuffer, index, 4), NumberStyles.HexNumber) / 10000000.0;
                     index += 4;
 
-                    var Altitude = Int16.Parse(Parsebytes(byteBuffer, index, 2), System.Globalization.NumberStyles.HexNumber);
+                    var Altitude = Int16.Parse(Parsebytes(byteBuffer, index, 2), NumberStyles.HexNumber);
                     index += 2;
 
-                    var dir = Int16.Parse(Parsebytes(byteBuffer, index, 2), System.Globalization.NumberStyles.HexNumber);
+                    var dir = Int16.Parse(Parsebytes(byteBuffer, index, 2), NumberStyles.HexNumber);
 
                     if (dir < 90) position.Direction = 1;
                     else if (dir == 90) position.Direction = 2;
@@ -107,7 +81,7 @@ namespace TeltonikaParser
                     else if (dir > 270) position.Direction = 7;
                     index += 2;
 
-                    var Satellite = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                    var Satellite = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                     index++;
 
                     if (Satellite >= 3)
@@ -115,64 +89,64 @@ namespace TeltonikaParser
                     else
                         position.Status = "L";
 
-                    position.Speed = Int16.Parse(Parsebytes(byteBuffer, index, 2), System.Globalization.NumberStyles.HexNumber);
+                    position.Speed = Int16.Parse(Parsebytes(byteBuffer, index, 2), NumberStyles.HexNumber);
                     index += 2;
 
-                    int ioEvent = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                    int ioEvent = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                     index++;
-                    int ioCount = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                    int ioCount = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                     index++;
                     //read 1 byte
                     {
-                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                         index++;
                         for (int j = 0; j < cnt; j++)
                         {
-                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                             index++;
                             //Add output status
                             switch (id)
                             {
-                                case ACC:
+                                case Constants.ACC:
                                     {
-                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                                         position.Status += value == 1 ? ",ACC off" : ",ACC on";
                                         index++;
                                         break;
                                     }
-                                case DOOR:
+                                case Constants.DOOR:
                                     {
-                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                                         position.Status += value == 1 ? ",door close" : ",door open";
                                         index++;
                                         break;
                                     }
-                                case GSM:
+                                case Constants.GSM:
                                     {
-                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                                         position.Status += string.Format(",GSM {0}", value);
                                         index++;
                                         break;
                                     }
-                                case STOP:
+                                case Constants.STOP:
                                     {
-                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                                         position.StopFlag = value == 1;
                                         position.IsStop = value == 1;
 
                                         index++;
                                         break;
                                     }
-                                case IMMOBILIZER:
+                                case Constants.IMMOBILIZER:
                                     {
-                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                                         position.Alarm = value == 0 ? "Activate Anti-carjacking success" : "Emergency release success";
                                         index++;
                                         break;
                                     }
-                                case GREEDRIVING:
+                                case Constants.GREEDRIVING:
                                     {
-                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                                        var value = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                                         switch (value)
                                         {
                                             case 1:
@@ -208,28 +182,26 @@ namespace TeltonikaParser
 
                     //read 2 byte
                     {
-                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                         index++;
                         for (int j = 0; j < cnt; j++)
                         {
-                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                             index++;
-
-
 
                             switch (id)
                             {
-                                case Analog:
+                                case Constants.Analog:
                                     {
-                                        var value = Int16.Parse(Parsebytes(byteBuffer, index, 2), System.Globalization.NumberStyles.HexNumber);
+                                        var value = Int16.Parse(Parsebytes(byteBuffer, index, 2), NumberStyles.HexNumber);
                                         if (value < 12)
                                             position.Alarm += string.Format("Low voltage", value);
                                         index += 2;
                                         break;
                                     }
-                                case SPEED:
+                                case Constants.SPEED:
                                     {
-                                        var value = Int16.Parse(Parsebytes(byteBuffer, index, 2), System.Globalization.NumberStyles.HexNumber);
+                                        var value = Int16.Parse(Parsebytes(byteBuffer, index, 2), NumberStyles.HexNumber);
                                         position.Alarm += string.Format("Speed", value);
                                         index += 2;
                                         break;
@@ -239,32 +211,31 @@ namespace TeltonikaParser
                                         index += 2;
                                         break;
                                     }
-
                             }
                         }
                     }
 
                     //read 4 byte
                     {
-                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                         index++;
                         for (int j = 0; j < cnt; j++)
                         {
-                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                             index++;
 
                             switch (id)
                             {
-                                case TEMPERATURE:
+                                case Constants.TEMPERATURE:
                                     {
-                                        var value = Int32.Parse(Parsebytes(byteBuffer, index, 4), System.Globalization.NumberStyles.HexNumber);
+                                        var value = Int32.Parse(Parsebytes(byteBuffer, index, 4), NumberStyles.HexNumber);
                                         position.Alarm += string.Format("Temperature {0}", value);
                                         index += 4;
                                         break;
                                     }
-                                case ODOMETER:
+                                case Constants.ODOMETER:
                                     {
-                                        var value = Int32.Parse(Parsebytes(byteBuffer, index, 4), System.Globalization.NumberStyles.HexNumber);
+                                        var value = Int32.Parse(Parsebytes(byteBuffer, index, 4), NumberStyles.HexNumber);
                                         position.Mileage = value;
                                         index += 4;
                                         break;
@@ -283,16 +254,165 @@ namespace TeltonikaParser
 
                     //read 8 byte
                     {
-                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                        int cnt = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                         index++;
                         for (int j = 0; j < cnt; j++)
                         {
-                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), System.Globalization.NumberStyles.HexNumber);
+                            int id = byte.Parse(Parsebytes(byteBuffer, index, 1), NumberStyles.HexNumber);
                             index++;
 
-                            var io = Int64.Parse(Parsebytes(byteBuffer, index, 8), System.Globalization.NumberStyles.HexNumber);
-                            position.Status += string.Format(",{0} {1}", id, io);
-                            index += 8;
+                            switch (id)
+                            {
+                                case Constants.MANUALCAN00:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN01 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN01:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN01 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN02:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN02 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN03:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN03 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN04:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN04 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN05:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN05 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN06:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN06 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN07:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN07 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN08:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN08 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN09:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN09 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN10:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN10 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN11:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN11 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN12:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN12 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN13:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN13 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN14:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN14 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN15:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN15 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN16:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN16 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN17:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN17 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN18:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN18 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                case Constants.MANUALCAN19:
+                                    {
+                                        var value = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.MCan.CAN19 = value;
+                                        index += 8;
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        var io = Int64.Parse(Parsebytes(byteBuffer, index, 8), NumberStyles.HexNumber);
+                                        position.Status += string.Format(",{0} {1}", id, io);
+                                        index += 8;
+                                        break;
+                                    }
+
+                            }
+
                         }
                     }
 
@@ -332,7 +452,7 @@ namespace TeltonikaParser
                 index++;
                 uint codecID = byteBuffer[index];
 
-                if (codecID == CODEC_FMXXX)
+                if (codecID == Constants.CODEC_8)
                 {
                     index++;
                     uint NumberOfData = byteBuffer[index];

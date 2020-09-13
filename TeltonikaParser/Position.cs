@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TeltonikaParser.Sensors;
 
 namespace TeltonikaParser
 {
    public partial class Position
     {
+        public Position()
+        {
+            MCan = new MANUALCAN();
+        }
         public int Id { get; set; }
         public string GpsTime { get; set; }
         public double La { get; set; }
@@ -39,5 +44,6 @@ namespace TeltonikaParser
         public int CarId { get; set; }
         public Nullable<int> AlarmStatus { get; set; }
         public Nullable<System.DateTime> Time { get; set; }
+        public MANUALCAN MCan { get; set; }
     }
 }
